@@ -1,11 +1,11 @@
 package bus_test
 
 import (
-	"sync"
 	"testing"
+	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/maddiesch/bus"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBus(t *testing.T) {
@@ -14,18 +14,20 @@ func TestBus(t *testing.T) {
 	listener, cancel := b.Sink()
 	defer cancel()
 
-	var waiter sync.WaitGroup
+	go b.Publish(100)
 
-	waiter.Add(1)
-	go func() {
-		defer waiter.Done()
+	e := receiveOnce(t, listener)
 
-		e := <-listener
+	assert.Equal(t, 100, e)
+}
 
-		spew.Dump(e)
-	}()
-
-	b.Publish(100)
-
-	waiter.Wait()
+func receiveOnce[V any](t *testing.T, ch <-chan V) V {
+	select {
+	case e := <-ch:
+		return e
+	case <-time.After(time.Millisecond * 100):
+		t.Log("failed to receive withing specified timeout")
+		t.FailNow()
+		panic("should have failed immediately")
+	}
 }
