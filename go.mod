@@ -1,4 +1,4 @@
-module github.com/maddiesch/bus
+module github.com/maddiesch/go-bus
 
 go 1.19
 
