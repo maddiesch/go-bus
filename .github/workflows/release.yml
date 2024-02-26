@@ -24,7 +24,7 @@ jobs:
           go-version-file: ./go.mod
       - name: Prepare for Release
         run: |
-          find . -type f -name '*_test.go' -delete
+          find . -type f -name '*_test.go' -not -name 'example_test.go' -delete
           rm -rf .github
           go mod tidy
           cat go.mod
