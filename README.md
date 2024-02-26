@@ -1,4 +1,4 @@
-# Go Bus
+# go-bus - Generic Event Bus
 
 [![tag](https://img.shields.io/github/v/tag/maddiesch/go-bus.svg)](https://github.com/maddiesch/go-bus/releases)
 [![codecov](https://codecov.io/gh/maddiesch/go-bus/graph/badge.svg?token=1PZ250SBC7)](https://codecov.io/gh/maddiesch/go-bus)
@@ -8,20 +8,43 @@
 
 A multi-producer multi-consumer generic event bus.
 
+## 🔨 Usage
+
+### Get
+
+`go get github.com/maddiesch/go-bus`
+
+### Import
+
 ```go
-eventBus := bus.New[string]()
+import (
+  "github.com/maddiesch/go-bus"
+)
+```
 
-subscription, cancel := eventBus.Sink()
-defer cancel()
+### Use
 
-go produceEvents(eventBus)
+```go
+func main() {
+  eventBus := bus.New[string]()
 
-for event := range subscription {
-  switch event {
-  case "stop":
-    return
-  default:
-    fmt.Println(event)
+  subscription, cancel := eventBus.Sink()
+  defer cancel()
+
+  go produceEvents(eventBus)
+
+  for event := range subscription {
+    switch event {
+    case "stop":
+      return
+    default:
+      fmt.Println(event)
+    }
   }
+}
+
+func produceEvents(eventBus *bus.Bus[string]) {
+  eventBus.Publish("Hello, World!")
+  eventBus.Publish("stop")
 }
 ```
