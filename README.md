@@ -7,3 +7,21 @@
 [![License](https://img.shields.io/github/license/maddiesch/go-bus)](./LICENSE)
 
 A multi-producer multi-consumer generic event bus.
+
+```go
+eventBus := bus.New[string]()
+
+subscription, cancel := eventBus.Sink()
+defer cancel()
+
+go produceEvents(eventBus)
+
+for event := range subscription {
+  switch event {
+  case "stop":
+    return
+  default:
+    fmt.Println(event)
+  }
+}
+```

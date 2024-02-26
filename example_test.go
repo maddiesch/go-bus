@@ -19,3 +19,28 @@ func ExampleBus() {
 	fmt.Println(message)
 	// Output: Hello, World!
 }
+
+func ExampleBus_Sink() {
+	eventBus := bus.New[string]()
+
+	subscription, cancel := eventBus.Sink()
+	defer cancel()
+
+	go produceEvents(eventBus)
+
+	for event := range subscription {
+		switch event {
+		case "stop":
+			return
+		default:
+			fmt.Println(event)
+		}
+	}
+
+	// Output: Hello, World!
+}
+
+func produceEvents(eventBus *bus.Bus[string]) {
+	eventBus.Publish("Hello, World!")
+	eventBus.Publish("stop")
+}
