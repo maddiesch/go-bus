@@ -36,7 +36,12 @@ func (b *Bus[E]) SetBufferSize(size int) {
 	b.chanSize = size
 }
 
-// Add a subscription to the bus
+// Subscribe to bus events
+// Sink returns a receive-only channel of type E and a Canceler function.
+// The channel can be used to receive values of type E from the bus.
+// The Canceler function can be used to cancel the subscription to the bus.
+//
+// The bus will broker all published messages to all active subscriptions.
 func (b *Bus[E]) Sink() (<-chan E, Canceler) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -59,7 +64,7 @@ func (b *Bus[E]) Sink() (<-chan E, Canceler) {
 	}
 }
 
-// Publish a message to the bus
+// Publish sends the given event to all registered listeners.
 func (b *Bus[E]) Publish(e E) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
