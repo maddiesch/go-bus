@@ -1,7 +1,9 @@
 // Package bus implements a simple multi-publisher multi-listener message bus.
 package bus
 
-import "sync"
+import (
+	"sync"
+)
 
 // Function signature for the cancelation returned with the listener channel, called when you no longer want to receive messages from the subscription
 type Canceler func()
@@ -23,6 +25,14 @@ func New[E any]() *Bus[E] {
 	}
 }
 
+// Set the channel buffer size for the bus. This will only affect new subscriptions.
+func (b *Bus[E]) SetBufferSize(size int) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.chanSize = size
+}
+
 // Add a subscription to the bus
 func (b *Bus[E]) Sink() (<-chan E, Canceler) {
 	b.mu.Lock()
@@ -40,8 +50,8 @@ func (b *Bus[E]) Sink() (<-chan E, Canceler) {
 		defer b.mu.Unlock()
 
 		if c, ok := b.listeners[id]; ok {
-			close(c)
 			delete(b.listeners, id)
+			close(c)
 		}
 	}
 }
@@ -59,23 +69,29 @@ func (b *Bus[E]) Publish(e E) {
 // Listen provides a convenient way to listen for events on a background go routine
 func (b *Bus[E]) Listen(fn func(E)) Canceler {
 	ch, cancel := b.Sink()
-	done := make(chan struct{})
+	stopChan := make(chan struct{})
+	waitChan := make(chan struct{})
 
 	go func() {
-		defer close(done)
+		defer func() {
+			cancel()
+			close(stopChan)
+			close(waitChan)
+		}()
 
 		for {
 			select {
 			case e := <-ch:
 				fn(e)
-			case <-done:
+			case <-stopChan:
 				return
 			}
 		}
 	}()
 
 	return func() {
+		stopChan <- struct{}{}
 		cancel()
-		close(done)
+		<-waitChan
 	}
 }
