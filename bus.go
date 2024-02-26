@@ -5,10 +5,12 @@ import (
 	"sync"
 )
 
-// Function signature for the cancelation returned with the listener channel, called when you no longer want to receive messages from the subscription
+// Function signature for the cancelation returned with the listener channel,
+// called when you no longer want to receive messages from the subscription
 type Canceler func()
 
-// Bus is the data structure that manages publishing events to the subscribed listeners
+// Bus is the data structure that manages publishing events to the subscribed
+// listeners
 type Bus[E any] struct {
 	listeners map[uint64]chan E
 	mu        sync.RWMutex
@@ -25,7 +27,8 @@ func New[E any]() *Bus[E] {
 	}
 }
 
-// Set the channel buffer size for the bus. This will only affect new subscriptions.
+// Set the channel buffer size for the bus. This will only affect new
+// subscriptions.
 func (b *Bus[E]) SetBufferSize(size int) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -63,35 +66,5 @@ func (b *Bus[E]) Publish(e E) {
 
 	for _, c := range b.listeners {
 		c <- e
-	}
-}
-
-// Listen provides a convenient way to listen for events on a background go routine
-func (b *Bus[E]) Listen(fn func(E)) Canceler {
-	ch, cancel := b.Sink()
-	stopChan := make(chan struct{})
-	waitChan := make(chan struct{})
-
-	go func() {
-		defer func() {
-			cancel()
-			close(stopChan)
-			close(waitChan)
-		}()
-
-		for {
-			select {
-			case e := <-ch:
-				fn(e)
-			case <-stopChan:
-				return
-			}
-		}
-	}()
-
-	return func() {
-		stopChan <- struct{}{}
-		cancel()
-		<-waitChan
 	}
 }
