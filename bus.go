@@ -73,3 +73,20 @@ func (b *Bus[E]) Publish(e E) {
 		c <- e
 	}
 }
+
+// Listen is a helper function that creates a new subscription to the bus.
+// It calls the provided function for each event received from the bus.
+// The function will be called on a arbitrary goroutine.
+//
+// The Canceler function removes the subscription from the bus.
+func Listen[E any](b *Bus[E], fn func(E)) Canceler {
+	ch, cancel := b.Sink()
+
+	go func() {
+		for e := range ch {
+			fn(e)
+		}
+	}()
+
+	return cancel
+}
