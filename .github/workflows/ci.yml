@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        go-version: [1.22.x]
+        go-version: [1.22.x, 1.23.x, 1.24.x]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -27,7 +27,7 @@ jobs:
         run: go test -race -coverprofile=coverage.txt -covermode=atomic ./... -timeout 2m
       - name: Upload coverage reports to Codecov
         if: ${{ matrix.go-version == '1.22.x' && matrix.os == 'ubuntu-latest' && github.event_name != 'workflow_dispatch' }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        go-version: [1.22.x]
+        go-version: [1.22.x, 1.23.x, 1.24.x]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
